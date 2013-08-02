@@ -1,5 +1,4 @@
 module samplingModule
-use varsModule, only : observationType
 implicit none
 contains
 

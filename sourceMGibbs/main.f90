@@ -31,38 +31,17 @@ implicit none
 ! Read ranges of parameters
 	open(unit=12,file='conf.dat',action='read',status='old')
 	read(12,*)
-	read(12,*) chain%BMin, chain%BMax, chain%BNodes, chain%BSigma2
-	read(12,*) chain%muMin, chain%muMax, chain%muNodes, chain%muSigma2
-	read(12,*) chain%fMin, chain%fMax, chain%fNodes, chain%fSigma2
-	read(12,*) chain%phiMin, chain%phiMax, chain%phiNodes	, chain%phiSigma2
+	read(12,*) chain%BMin, chain%BMax
+	read(12,*) chain%muMin, chain%muMax
+	read(12,*) chain%fMin, chain%fMax
+	read(12,*) chain%phiMin, chain%phiMax
 	close(12)
 	
-	chain%BSigma2 = chain%BSigma2**2
-	chain%muSigma2 = chain%muSigma2**2
-	chain%fSigma2 = chain%fSigma2**2
-	chain%phiSigma2 = chain%phiSigma2**2
-	
-	allocate(chain%BLoc(chain%BNodes))
-	allocate(chain%muLoc(chain%muNodes))
-	allocate(chain%fLoc(chain%fNodes))
-	allocate(chain%phiLoc(chain%phiNodes))
-	do i = 1, chain%BNodes
-		chain%BLoc(i) = (i-1.d0) * (chain%BMax - chain%BMin) / (chain%BNodes-1.d0) + chain%BMin
-	enddo
-	print *, 'B hyperparameter positions : ', chain%BLoc
-	do i = 1, chain%BNodes
-		chain%muLoc(i) = (i-1.d0) * (chain%muMax - chain%muMin) / (chain%muNodes-1.d0) + chain%muMin
-	enddo
-	print *, 'mu hyperparameter positions : ', chain%muLoc
-	do i = 1, chain%BNodes
-		chain%fLoc(i) = (i-1.d0) * (chain%fMax - chain%fMin) / (chain%fNodes-1.d0) + chain%fMin
-	enddo
-	print *, 'f hyperparameter positions : ', chain%fLoc
-	do i = 1, chain%BNodes
-		chain%phiLoc(i) = (i-1.d0) * (chain%phiMax - chain%phiMin) / (chain%phiNodes-1.d0) + chain%phiMin
-	enddo	
-	print *, 'phiB hyperparameter positions : ', chain%phiLoc
-		
+	print *, 'B range : ', chain%BMin, chain%BMax
+ 	print *, 'mu range : ', chain%muMin, chain%muMax
+ 	print *, 'f range : ', chain%fMin, chain%fMax
+ 	print *, 'phi range : ', chain%phiMin, chain%phiMax
+				
 	print *, 'Data read'
 
 ! Allocate memory for the model parameters
@@ -71,17 +50,27 @@ implicit none
 	allocate(f_i(chain%npixels))
 	allocate(phi_i(chain%npixels))
 	
+	allocate(sqrtMu(chain%npixels))
+	allocate(c2p(chain%npixels))
+	allocate(s2p(chain%npixels))
+	
 ! Hyperparameters
-	allocate(thetaB_i(chain%BNodes))
-	allocate(thetamu_i(chain%muNodes))
-	allocate(thetaf_i(chain%fNodes))
-	allocate(thetaphi_i(chain%phiNodes))
+	allocate(hyperB_i(2))
+	allocate(hypermu_i(2))
+	allocate(hyperf_i(2))
+	allocate(hyperphi_i(2))
 	
 ! Number of parameters
 ! - B, mu, f and phi for each pixel plus the hyperparameters
-	npar = chain%npixels * 4 + (chain%BNodes + chain%muNodes + chain%fNodes + chain%phiNodes)
+	npar = chain%npixels * 4 + 8
+	
+	allocate(chain%parsToSave(8))
+	do i = 1, 8
+		chain%parsToSave(i) = chain%npixels*4+i
+	enddo
 
 	print *, 'Number of parameters = ', npar
+	print *, 'Saving only hyperparameters '
 
 ! If this is the start of a chain, open the file destroying the previous one
 	if (index(action,'START')) then

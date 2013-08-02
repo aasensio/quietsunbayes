@@ -20,6 +20,7 @@ module mcmc_class
 		real(kind=8), pointer :: trial(:), ls(:), lsaccepted(:), bestPars(:)
 		real(kind=8) :: logp, logptrial, maxlogP
 		character(len=40) :: algorithm
+		integer, pointer :: parsToSave(:)
 	contains
 		procedure :: initChain
 		procedure :: stepChain
@@ -292,13 +293,25 @@ module mcmc_class
 		if (this%iteration > this%actual_chain_length) then
 			
 			inquire(unit=12, size=filepos)
-			write(12,pos=filepos+1) this%chain
+			if (associated(this%parsToSave)) then
+				write(12,pos=filepos+1) this%chain(this%parsToSave,:)
+			else
+				write(12,pos=filepos+1) this%chain
+			endif
 			
 			inquire(unit=13, size=filepos)
-			write(13,pos=filepos+1) this%ls_chain
+			if (associated(this%parsToSave)) then
+				write(13,pos=filepos+1) this%ls_chain(this%parsToSave,:)
+			else
+				write(13,pos=filepos+1) this%ls_chain
+			endif
 
 			open(unit=14,file='posterior.sizes',action='write',status='replace')
-			write(14,*) this%npar, this%step
+			if (associated(this%parsToSave)) then
+				write(14,*) size(this%parsToSave), this%step
+			else
+				write(14,*) this%npar, this%step
+			endif
 			close(14)
 											
 ! Reset the iteration number
@@ -331,15 +344,27 @@ module mcmc_class
 	integer :: filepos
 	
 		inquire(unit=12, size=filepos)
-		write(12,pos=filepos+1) this%chain(:,1:this%iteration)
+		if (associated(this%parsToSave)) then
+			write(12,pos=filepos+1) this%chain(this%parsToSave,1:this%iteration)
+		else
+			write(12,pos=filepos+1) this%chain(:,1:this%iteration)
+		endif
 			
 		inquire(unit=13, size=filepos)
-		write(13,pos=filepos+1) this%ls_chain(:,1:this%iteration)
+		if (associated(this%parsToSave)) then
+			write(13,pos=filepos+1) this%ls_chain(this%parsToSave,1:this%iteration)
+		else
+			write(13,pos=filepos+1) this%ls_chain(:,1:this%iteration)
+		endif
 
 		open(unit=14,file='posterior.sizes',action='write',status='replace')
-		write(14,*) this%npar, this%step
+		if (associated(this%parsToSave)) then
+			write(14,*) size(this%parsToSave), this%step
+		else
+			write(14,*) this%npar, this%step
+		endif
 		close(14)
-					
+							
 	end subroutine finalizeChain
 
 !------------------------------------------------------------------
