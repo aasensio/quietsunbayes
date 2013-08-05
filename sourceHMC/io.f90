@@ -8,7 +8,7 @@ contains
 !------------------------------------------------
 	subroutine readObservations
 			
-		open(unit=12,file='/scratch1/aasensio/HINODE/MAP_LITES/weakField.bin',status='old',action='read',form='unformatted')
+		open(unit=12,file='/home/aasensio/Dropbox/weakField.bin',status='old',action='read',form='unformatted')
 		read(12) nPixels
 		write(*,*) 'Number of pixels ', nPixels
 		allocate(CV1(nPixels))

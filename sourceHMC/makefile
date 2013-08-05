@@ -1,31 +1,20 @@
 # Makefile for building the MCMC F90 code BayesME
 
 # Select compiler
-# Intel Fortran compiler
-COMPILER_F90 = ifort
-OPTIONS_F90 = -c -O3
 
-COMPILER_C = icc
-CC_LANG_FLAGS=-std=c89
-CC_OPT_FLAGS=-O3 -ip -parallel
-CFLAGS=$(CC_LANG_FLAGS) $(CC_OPT_FLAGS)
+C_COMPILER = gnu
+F_COMPILER = intel
 
-# COMPILER_C = gcc
-# CC_LANG_FLAGS=-std=c89
-# CC_OPT_FLAGS=-O3 -fomit-frame-pointer
-# CFLAGS=$(CC_LANG_FLAGS) $(CC_OPT_FLAGS)
-
+include makefiles/makefile.c$(C_COMPILER)
+include makefiles/makefile.f$(F_COMPILER)
 
 HMC_LIB = hmc
-GEODESIC_LIB = geodesic
-BLAS_LIB = /scratch/LIBS/BLAS
-LAPACK_LIB = /scratch/LIBS/lapack-3.2
+# GEODESIC_LIB = geodesic
+# BLAS_LIB = /scratch/LIBS/BLAS
+# LAPACK_LIB = /scratch/LIBS/lapack-3.2
 
-# GFortran
-#COMPILER = gfortran
-#OPTIONS = -c -frecord-marker=4 -ffree-form
-
-LIBS=-L$(HMC_LIB) -lhmc -L$(GEODESIC_LIB) -lgeodesic -L$(BLAS_LIB) -L$(LAPACK_LIB) -llapack_LINUX -lblas_LINUX
+LIBS=-L$(HMC_LIB) -lhmc 
+# -L$(GEODESIC_LIB) -lgeodesic -L$(BLAS_LIB) -L$(LAPACK_LIB) -llapack_LINUX -lblas_LINUX
 
 .SUFFIXES: .f .o
 

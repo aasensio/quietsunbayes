@@ -27,11 +27,11 @@ contains
 		call initialValuesWeakField(st, stepSize)
 				
 ! Test derivatives
-! 		allocate(logPGradient(nVariables))
-! 		allocate(logPGradientNew(nVariables))
-! 		allocate(st2(nVariables))
-! 				
-! 		call negLogPosterior(nVariables,st,logP,logPGradient)
+!  		allocate(logPGradient(nVariables))
+!  		allocate(logPGradientNew(nVariables))
+!  		allocate(st2(nVariables))
+!  				
+!  		call negLogPosterior(nVariables,st,logP,logPGradient)
 ! 		do i = 1, nVariables
 ! 			st2 = st
 ! 			st2(i) = st(i) + 1.d-6
@@ -39,10 +39,10 @@ contains
 ! 			print *, (logP2 - logP) / 1.d-6, logPGradient(i)
 ! 		enddo
 ! 		stop
-								
+
 		open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')
 		
-		call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx,seed,resume,&
+		call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,resume,&
 			fbInt, negLogPosterior, writeHMCProcess, nBurn, nSteps)
 			
 		close(20)		
@@ -62,28 +62,28 @@ contains
 ! B
 		do i = 1, npixels
 			pars(loop) = 200.d0
-			stepSize(loop) = 5.d0
+			stepSize(loop) = 50.d0
 			loop = loop + 1
 		enddo
 
 ! mu
 		do i = 1, npixels
 			pars(loop) = 0.2d0
-			stepSize(loop) = 0.05d0
+			stepSize(loop) = 0.2d0
 			loop = loop + 1
 		enddo
 
 ! f
 		do i = 1, npixels
-			pars(loop) = 0.2d0
-			stepSize(loop) = 0.05d0
+			pars(loop) = 0.5d0
+			stepSize(loop) = 0.2d0
 			loop = loop + 1
 		enddo
 		
 ! phi
 		do i = 1, npixels
 			pars(loop) = 0.1d0
-			stepSize(loop) = 0.03d0
+			stepSize(loop) = 0.3d0
 			loop = loop + 1
 		enddo
 
@@ -314,6 +314,22 @@ contains
 		logP = logP - (nu-1.d0) * log(hyperB_i(2)) - nu * hyperB_i(2)
 		logPGradient(4*nPixels+2) = logPGradient(4*nPixels+2) + (1.d0 - nu) / hyperB_i(2) - nu
 		
+!-------------
+! Hyperpriors for alpha and beta for each Beta prior		
+!-------------
+		logP = logP - 2.5d0 * log(sum(hypermu_i))
+		logPGradient(4*nPixels+3) = logPGradient(4*nPixels+3) - 2.5d0 / sum(hypermu_i)
+		logPGradient(4*nPixels+4) = logPGradient(4*nPixels+4) - 2.5d0 / sum(hypermu_i)
+		
+		logP = logP - 2.5d0 * log(sum(hyperf_i))
+		logPGradient(4*nPixels+5) = logPGradient(4*nPixels+5) - 2.5d0 / sum(hyperf_i)
+		logPGradient(4*nPixels+6) = logPGradient(4*nPixels+6) - 2.5d0 / sum(hyperf_i)
+		
+		logP = logP - 2.5d0 * log(sum(hyperphi_i))
+		logPGradient(4*nPixels+7) = logPGradient(4*nPixels+7) - 2.5d0 / sum(hyperphi_i)
+		logPGradient(4*nPixels+8) = logPGradient(4*nPixels+8) - 2.5d0 / sum(hyperphi_i)
+
+		
 !-----------------
 ! DATA LOG-LIKELIHOOD
 !-----------------
@@ -370,7 +386,7 @@ contains
 	integer i
 		
 	xwrite = x(4*nPixels+1:nVariables)
-	write(20) xwrite
+	write(20) x!write
 				
 	end subroutine writeHMCProcess
 

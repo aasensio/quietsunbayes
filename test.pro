@@ -1,10 +1,12 @@
-pro test
-	a = dblarr(8,20000)
+pro test, n
+	a = dblarr(408,n)
 	openr,2,'test.extract'
 	readu,2,a
 	close,2
 	
-	a = a[*,10000:*]
+	a = a[*,n/2:*]
+	
+	stop
 		
 	!p.multi = [0,4,2,0,1]
 	for i = 0, 7 do begin
