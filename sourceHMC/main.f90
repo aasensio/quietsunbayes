@@ -7,6 +7,7 @@ implicit none
 	
 	integer :: i, nargs
 	character(len=100) :: action, arg
+	character(len=128) :: fileObs
 	
 ! Find the parameters passed to the program
 	nargs = iargc()
@@ -23,13 +24,12 @@ implicit none
 		call getarg(2,arg)
 		read(arg,*) nSteps
 	endif
-
-! Read the observations
-	print *, 'Reading observations'
-	call readObservations
 	
 ! Read ranges of parameters
 	open(unit=12,file='conf.dat',action='read',status='old')
+	read(12,*)
+	read(12,*) fileObs
+	read(12,*)
 	read(12,*)
 	read(12,*) BMin, BMax
 	read(12,*) muMin, muMax
@@ -42,8 +42,12 @@ implicit none
  	print *, 'f range : ', fMin, fMax
  	print *, 'phi range : ', phiMin, phiMax
 				
-	print *, 'Data read'
+! Read the observations
+	print *, 'Reading observations'
+	call readObservations(fileObs)
 	
+	print *, 'Data read'
+
 
 ! Allocate memory for the model parameters
 	allocate(B_i(npixels))

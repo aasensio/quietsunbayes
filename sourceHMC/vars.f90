@@ -2,6 +2,7 @@ module varsModule
 implicit none
 
 	integer :: nPixels, nVariables, nSteps
+		
 	real(kind=8) :: BMin, BMax, muMin, muMax, fMin, fMax, phiMin, phiMax
 		
 	real(kind=8), allocatable, dimension(:) :: CV1, CV2, CV3, CQ1, CQ2, CQ3, CU1, CU2, CU3

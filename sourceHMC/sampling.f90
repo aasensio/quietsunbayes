@@ -25,6 +25,7 @@ contains
 		allocate(stepSize(nVariables))
 				
 		call initialValuesWeakField(st, stepSize)
+		
 				
 ! Test derivatives
 !  		allocate(logPGradient(nVariables))
@@ -56,74 +57,93 @@ contains
 	real(kind=8) :: pars(:), stepSize(:)
 	integer :: loop, i, j
 	real(kind=8) :: value
+	real(kind=8), allocatable :: Bpar(:), Bperp(:), azimuth(:)
 
 		loop = 1
 		
+		allocate(Bpar(npixels))
+		allocate(Bperp(npixels))
+		allocate(azimuth(npixels))
+		
+! Compute maximum-likelihood solution
+		Bpar = -0.5d0 * CV3 / CV2
+		Bperp = sqrt(0.5d0 * sqrt(CQ3**2 + CU3**2) / CQ2)
+		
+		do i = 1, npixels
+			azimuth(i) = 0.5d0 * atan2(CU3(i), CQ3(i))
+			if (CQ3(i) > 0.d0 .and. CU3(i) < 0.d0) then
+				azimuth(i) = azimuth(i) + 3.141592
+			endif
+			if (CU3(i) < 0.d0) then
+				azimuth(i) = azimuth(i) + 0.5d0 * 3.141592
+			endif
+		enddo
+				
+			
 ! B
 		do i = 1, npixels
-			pars(loop) = 200.d0
+			pars(loop) = sqrt(Bpar(i)**2 + Bperp(i)**2) / 0.5
 			stepSize(loop) = 50.d0
 			loop = loop + 1
 		enddo
 
 ! mu
 		do i = 1, npixels
-			pars(loop) = 0.2d0
-			stepSize(loop) = 0.2d0
+			pars(loop) = cos(atan2(Bperp(i),Bpar(i)))
+			stepSize(loop) = 0.1d0
 			loop = loop + 1
 		enddo
 
 ! f
 		do i = 1, npixels
 			pars(loop) = 0.5d0
-			stepSize(loop) = 0.2d0
+			stepSize(loop) = 0.3d0
 			loop = loop + 1
 		enddo
 		
 ! phi
 		do i = 1, npixels
-			pars(loop) = 0.1d0
-			stepSize(loop) = 0.3d0
+			pars(loop) = 1.d0 !azimuth(i)
+			stepSize(loop) = 4.0d0
 			loop = loop + 1
 		enddo
-
+		
 
 ! hyperB
-		pars(loop) = 2.d0
-		stepSize(loop) = 0.2d0
+		pars(loop) = 5.d0
+		stepSize(loop) = 5.2d0
 		loop = loop + 1
 		
-		pars(loop) = 200.d0
-		stepSize(loop) = 15.d0
+		pars(loop) = 40.d0
+		stepSize(loop) = 20.d0
 		loop = loop + 1
 				
 ! hypermu
-		pars(loop) = 150.5d0
-		stepSize(loop) = 15.d0
+		pars(loop) = 20.5d0
+		stepSize(loop) = 10.d0
 		loop = loop + 1
 		
-		pars(loop) = 200.5d0
-		stepSize(loop) = 15.d0
+		pars(loop) = 20.5d0
+		stepSize(loop) = 10.d0
 		loop = loop + 1
 		
 ! hyperf		
-		pars(loop) = 2.5d0
-		stepSize(loop) = 1.2d0
+		pars(loop) = 8.d0
+		stepSize(loop) = 5.d0
 		loop = loop + 1
 		
-		pars(loop) = 3.5d0
-		stepSize(loop) = 1.5d0
+		pars(loop) = 20.5d0
+		stepSize(loop) = 10.d0
 		loop = loop + 1
 		
 ! hyperphi		
-		pars(loop) = 11.5d0
-		stepSize(loop) = 4.d0
+		pars(loop) = 5.d0
+		stepSize(loop) = 5.d0
 		loop = loop + 1
 		
-		pars(loop) = 200.5d0
-		stepSize(loop) = 50.d0
-		loop = loop + 1
-		
+		pars(loop) = 50.d0
+		stepSize(loop) = 100.d0
+				
 	end subroutine initialValuesWeakField
 
 	
@@ -187,7 +207,7 @@ contains
 ! Hyperpriors
 		hyperB_i(1) = trial(loop)
 		loop = loop + 1
-		if (hyperB_i(1) < 0) then
+		if (hyperB_i(1) < 0 .or. hyperB_i(1) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -195,7 +215,7 @@ contains
 		
 		hyperB_i(2) = trial(loop)
 		loop = loop + 1
-		if (hyperB_i(2) < 0) then
+		if (hyperB_i(2) < 0 .or. hyperB_i(2) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -203,7 +223,7 @@ contains
 		
 		hypermu_i(1) = trial(loop)
 		loop = loop + 1
-		if (hypermu_i(1) < 0) then
+		if (hypermu_i(1) < 0 .or. hypermu_i(1) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -211,7 +231,7 @@ contains
 		
 		hypermu_i(2) = trial(loop)
 		loop = loop + 1
-		if (hypermu_i(2) < 0) then
+		if (hypermu_i(2) < 0 .or. hypermu_i(2) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -219,7 +239,7 @@ contains
 		
 		hyperf_i(1) = trial(loop)
 		loop = loop + 1
-		if (hyperf_i(1) < 0) then
+		if (hyperf_i(1) < 0 .or. hyperf_i(1) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -227,7 +247,7 @@ contains
 		
 		hyperf_i(2) = trial(loop)
 		loop = loop + 1
-		if (hyperf_i(2) < 0) then
+		if (hyperf_i(2) < 0 .or. hyperf_i(2) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -235,7 +255,7 @@ contains
 		
 		hyperphi_i(1) = trial(loop)
 		loop = loop + 1
-		if (hyperphi_i(1) < 0) then
+		if (hyperphi_i(1) < 0 .or. hyperphi_i(1) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -243,7 +263,7 @@ contains
 		
 		hyperphi_i(2) = trial(loop)
 		loop = loop + 1
-		if (hyperphi_i(2) < 0) then
+		if (hyperphi_i(2) < 0 .or. hyperphi_i(2) > 100) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -368,7 +388,7 @@ contains
 					
 		logP = -logP
 		logPGradient = -logPGradient
-				  
+						  
 	end subroutine negLogPosterior
 
 !------------------------------------------------
