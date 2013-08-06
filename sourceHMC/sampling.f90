@@ -13,8 +13,8 @@ contains
 	integer :: seed, fbInt, maxStep, resume, nburn, i
 	character(len=128) :: flPfx
 	
-		scaleFactor = 0.5d0
- 		seed = 1234
+		scaleFactor = 0.1d0 		
+		seed = 1234
 		fbInt = 10
 		maxStep = 10
 		resume = 0
@@ -71,15 +71,9 @@ contains
 		
 		do i = 1, npixels
 			azimuth(i) = 0.5d0 * atan2(CU3(i), CQ3(i))
-			if (CQ3(i) > 0.d0 .and. CU3(i) < 0.d0) then
-				azimuth(i) = azimuth(i) + 3.141592
-			endif
-			if (CU3(i) < 0.d0) then
-				azimuth(i) = azimuth(i) + 0.5d0 * 3.141592
-			endif
+ 			if (azimuth(i) < 0.d0) azimuth(i) = azimuth(i) + PI
 		enddo
-				
-			
+					
 ! B
 		do i = 1, npixels
 			pars(loop) = sqrt(Bpar(i)**2 + Bperp(i)**2) / 0.5
@@ -92,8 +86,8 @@ contains
 			pars(loop) = cos(atan2(Bperp(i),Bpar(i)))
 			stepSize(loop) = 0.1d0
 			loop = loop + 1
-		enddo
-
+		enddo				
+		
 ! f
 		do i = 1, npixels
 			pars(loop) = 0.5d0
@@ -103,18 +97,18 @@ contains
 		
 ! phi
 		do i = 1, npixels
-			pars(loop) = 1.d0 !azimuth(i)
-			stepSize(loop) = 4.0d0
+			pars(loop) = 1.d0!azimuth(i)
+			stepSize(loop) = 2.0d0
 			loop = loop + 1
 		enddo
 		
 
 ! hyperB
-		pars(loop) = 5.d0
-		stepSize(loop) = 5.2d0
+		pars(loop) = 1.d0
+		stepSize(loop) = 2.2d0
 		loop = loop + 1
 		
-		pars(loop) = 40.d0
+		pars(loop) = 140.d0
 		stepSize(loop) = 20.d0
 		loop = loop + 1
 				
@@ -207,7 +201,7 @@ contains
 ! Hyperpriors
 		hyperB_i(1) = trial(loop)
 		loop = loop + 1
-		if (hyperB_i(1) < 0 .or. hyperB_i(1) > 100) then
+		if (hyperB_i(1) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -215,7 +209,7 @@ contains
 		
 		hyperB_i(2) = trial(loop)
 		loop = loop + 1
-		if (hyperB_i(2) < 0 .or. hyperB_i(2) > 100) then
+		if (hyperB_i(2) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -223,7 +217,7 @@ contains
 		
 		hypermu_i(1) = trial(loop)
 		loop = loop + 1
-		if (hypermu_i(1) < 0 .or. hypermu_i(1) > 100) then
+		if (hypermu_i(1) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -231,7 +225,7 @@ contains
 		
 		hypermu_i(2) = trial(loop)
 		loop = loop + 1
-		if (hypermu_i(2) < 0 .or. hypermu_i(2) > 100) then
+		if (hypermu_i(2) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -239,7 +233,7 @@ contains
 		
 		hyperf_i(1) = trial(loop)
 		loop = loop + 1
-		if (hyperf_i(1) < 0 .or. hyperf_i(1) > 100) then
+		if (hyperf_i(1) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -247,7 +241,7 @@ contains
 		
 		hyperf_i(2) = trial(loop)
 		loop = loop + 1
-		if (hyperf_i(2) < 0 .or. hyperf_i(2) > 100) then
+		if (hyperf_i(2) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -255,7 +249,7 @@ contains
 		
 		hyperphi_i(1) = trial(loop)
 		loop = loop + 1
-		if (hyperphi_i(1) < 0 .or. hyperphi_i(1) > 100) then
+		if (hyperphi_i(1) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
@@ -263,11 +257,16 @@ contains
 		
 		hyperphi_i(2) = trial(loop)
 		loop = loop + 1
-		if (hyperphi_i(2) < 0 .or. hyperphi_i(2) > 100) then
+		if (hyperphi_i(2) < 0) then
 			logP = -1.d15
 			logPGradient = -1.d15
 			return
 		endif
+		
+! 		hyperB_i = 1.d0
+ 		hypermu_i = 1.d0
+ 		hyperf_i = 1.d0
+ 		hyperphi_i = 1.d0
 		
  		logP = 0.d0
 		logPGradient = 0.d0
@@ -358,36 +357,37 @@ contains
 		sqrtMu = sqrt(1.d0-mu_i**2)
 		dsqrtMudMu = -mu_i / sqrtMu
 		
-  		logP = logP - 0.5d0 / 1.d-3**2 * (&
+  		logP = logP - 0.5d0 / sigma_n**2 * (&
 			sum( CV1 + (B_i * mu_i * f_i)**2 * CV2 - (B_i * mu_i * f_i) * CV3 ) + &
 			sum( CQ1 + (B_i * sqrtMu * f_i * c2p)**2 * CQ2 - (B_i * sqrtMu * f_i * c2p) * CQ3 ) + &
 			sum( CU1 + (B_i * sqrtMu * f_i * s2p)**2 * CU2 - (B_i * sqrtMu * f_i * s2p) * CU3 ) )
 			
 ! dlogL/dB
-		logPGradient(1:nPixels) = logPGradient(1:nPixels) - 0.5d0 / 1.d-3**2 * (&
+		logPGradient(1:nPixels) = logPGradient(1:nPixels) - 0.5d0 / sigma_n**2 * (&
 			( 2.d0 * B_i * (mu_i * f_i)**2 * CV2 - (mu_i * f_i) * CV3 ) + &
 			( 2.d0 * B_i * (sqrtMu * f_i * c2p)**2 * CQ2 - (sqrtMu * f_i * c2p) * CQ3 ) + &
 			( 2.d0 * B_i * (sqrtMu * f_i * s2p)**2 * CU2 - (sqrtMu * f_i * s2p) * CU3 ) )
 			
 ! dlogL/dmu
-		logPGradient(nPixels+1:2*nPixels) = logPGradient(nPixels+1:2*nPixels) - 0.5d0 / 1.d-3**2 * (&
+		logPGradient(nPixels+1:2*nPixels) = logPGradient(nPixels+1:2*nPixels) - 0.5d0 / sigma_n**2 * (&
 			( 2.d0 * mu_i * (B_i * f_i)**2 * CV2 - (B_i * f_i) * CV3 ) + &
 			dsqrtMudMu * ( 2.d0 * sqrtMu * (B_i * f_i * c2p)**2 * CQ2 - (B_i * f_i * c2p) * CQ3 ) + &
 			dsqrtMudMu * ( 2.d0 * sqrtMu * (B_i * f_i * s2p)**2 * CU2 - (B_i * f_i * s2p) * CU3 ) )
 			
 ! dlogL/df
-		logPGradient(2*nPixels+1:3*nPixels) = logPGradient(2*nPixels+1:3*nPixels) - 0.5d0 / 1.d-3**2 * (&
+		logPGradient(2*nPixels+1:3*nPixels) = logPGradient(2*nPixels+1:3*nPixels) - 0.5d0 / sigma_n**2 * (&
 			( 2.d0 * f_i * (B_i * mu_i)**2 * CV2 - (B_i * mu_i) * CV3 ) + &
 			( 2.d0 * f_i * (B_i * sqrtMu * c2p)**2 * CQ2 - (B_i * sqrtMu * c2p) * CQ3 ) + &
 			( 2.d0 * f_i * (B_i * sqrtMu * s2p)**2 * CU2 - (B_i * sqrtMu * s2p) * CU3 ) )
 			
 ! dlogL/dphi
-		logPGradient(3*nPixels+1:4*nPixels) = logPGradient(3*nPixels+1:4*nPixels) - 0.5d0 / 1.d-3**2 * (&			
+		logPGradient(3*nPixels+1:4*nPixels) = logPGradient(3*nPixels+1:4*nPixels) - 0.5d0 / sigma_n**2 * (&			
 			( -4.d0 * c2p * s2p * (B_i * sqrtMu * f_i)**2 * CQ2 + 2.d0 * s2p * (B_i * sqrtMu * f_i) * CQ3 ) + &
 			( 4.d0 * s2p * c2p * (B_i * sqrtMu * f_i)**2 * CU2 - 2.d0 * c2p * (B_i * sqrtMu * f_i) * CU3 ) )
 					
 		logP = -logP
 		logPGradient = -logPGradient
+				
 						  
 	end subroutine negLogPosterior
 

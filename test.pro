@@ -5,6 +5,8 @@ pro test, n
 	close,2
 	
 ; 	a = a[*,n/2:*]
+
+stop
 	
 	!p.multi = [0,8,8,0,1]
 	for i = 0, 7 do begin

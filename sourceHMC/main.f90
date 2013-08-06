@@ -47,6 +47,8 @@ implicit none
 	call readObservations(fileObs)
 	
 	print *, 'Data read'
+	
+	sigma_n = 1.d-3
 
 
 ! Allocate memory for the model parameters

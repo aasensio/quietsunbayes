@@ -1,9 +1,10 @@
 module varsModule
 implicit none
 
+	real(kind=8), parameter :: PI = 3.14159265359d0
 	integer :: nPixels, nVariables, nSteps
 		
-	real(kind=8) :: BMin, BMax, muMin, muMax, fMin, fMax, phiMin, phiMax
+	real(kind=8) :: BMin, BMax, muMin, muMax, fMin, fMax, phiMin, phiMax, sigma_n
 		
 	real(kind=8), allocatable, dimension(:) :: CV1, CV2, CV3, CQ1, CQ2, CQ3, CU1, CU2, CU3
 		
