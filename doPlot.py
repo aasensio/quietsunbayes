@@ -22,17 +22,24 @@ dat = f.read()
 dat = dat.strip()
 [npar, nstep] = map(int, dat.split())
 
-ch = np.fromfile('posterior', dtype=np.float64).reshape((npar,nstep), order="FORTRAN")
+ch = np.fromfile('test.extract', dtype=np.float64).reshape((npar,nstep), order="FORTRAN")
 
 length = len(ch[0,:])
 ch = ch[:,length/2:]
 
-fig1 = plt.figure(1)
+fig1 = plt.figure(1, figsize=(13,10))
 plt.clf()
 
+loop = 1
 for i in range(8):
-	ax = fig1.add_subplot(4,2,i+1)
-	ax.plot(ch[i,:])
+	ax = fig1.add_subplot(4,4,loop)
+	ax.plot(ch[i,:])	
+	loop += 1
+	ax = fig1.add_subplot(4,4,loop)
+	ax.hist(ch[i,:])
+	loop += 1
+	
+fig1.tight_layout()
 	
 fig2 = plt.figure(2)
 plt.clf()

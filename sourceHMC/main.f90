@@ -72,6 +72,10 @@ implicit none
 ! - B, mu, f and phi for each pixel plus the hyperparameters
 	nVariables = nPixels * 4 + 8
 	
+	allocate(parsOld(nVariables))
+	allocate(parsMean(nVariables))
+	allocate(parsVariance(nVariables))
+	
 	allocate(parsToSave(8))
 	do i = 1, 8
 		parsToSave(i) = nPixels*4+i

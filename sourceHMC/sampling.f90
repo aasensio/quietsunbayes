@@ -8,15 +8,15 @@ contains
 ! Carry out the sampling using the HMC
 !------------------------------------------------
 	subroutine doSampling	
-	real(kind=8), allocatable :: st(:), stepSize(:), logPGradient(:), logPGradientNew(:), st2(:)
+	real(kind=8), allocatable :: st(:), stepSize(:), logPGradient(:), logPGradientNew(:), st2(:), meanOld(:)
 	real(kind=8) :: scaleFactor, logP, logP2
-	integer :: seed, fbInt, maxStep, resume, nburn, i
+	integer :: seed, fbInt, maxStep, resume, nburn, i, nStepsBurn
 	character(len=128) :: flPfx
 	
-		scaleFactor = 0.1d0 		
+		scaleFactor = 0.5d0
 		seed = 1234
 		fbInt = 10
-		maxStep = 10
+		maxStep = 1000
 		resume = 0
 		nburn = 0
 		flPfx = 'test'
@@ -26,6 +26,10 @@ contains
 				
 		call initialValuesWeakField(st, stepSize)
 		
+		parsOld = st		
+		nStep = 1
+		parsVariance = 0.d0
+		parsMean = 0.d0
 				
 ! Test derivatives
 !  		allocate(logPGradient(nVariables))
@@ -41,12 +45,43 @@ contains
 ! 		enddo
 ! 		stop
 
-		open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')
+ 		open(unit=20,file= flPfx(1:len_trim(flPfx))//".burnin",action='write',status='replace',access='stream')		
+ 		nStepsBurn = 200
+ 		call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,resume,&
+ 			fbInt, negLogPosterior, writeHMCProcessBurnin, nBurn, nStepsBurn)			
+ 		close(20)
 		
+! Estimate width of distributions
+		open(unit=20,file=flPfx(1:len_trim(flPfx))//".burnin",action='read',status='old',access='stream')
+		parsMean = 0.d0
+		parsVariance = 0.d0
+		nStep = 1
+		allocate(meanOld(nVariables))
+		do i = 1, nStepsBurn
+			read(20) st
+			if (i > 100) then
+				meanOld = parsMean
+				parsMean = meanOld + (st - meanOld) / (nStep + 1.d0)		
+				parsVariance = (nStep - 1.d0) / nStep * parsVariance + (st - meanOld)**2 / (nStep+1.d0)**2 + (st - meanOld)**2 / nStep
+				nStep = nStep + 1
+			endif
+		enddo		
+		deallocate(meanOld)
+		
+		close(20)
+		
+		stepSize = sqrt(parsVariance)
+		st = parsMean
+		
+		maxStep = 10
+		open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')				
 		call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,resume,&
 			fbInt, negLogPosterior, writeHMCProcess, nBurn, nSteps)
-			
-		close(20)		
+		close(20)
+		
+		open(unit=20,file='posterior.sizes',action='write',status='replace')
+		write(20,*) 8, nSteps
+		close(20)
 		
 	end subroutine doSampling
 	
@@ -77,7 +112,7 @@ contains
 ! B
 		do i = 1, npixels
 			pars(loop) = sqrt(Bpar(i)**2 + Bperp(i)**2) / 0.5
-			stepSize(loop) = 50.d0
+			stepSize(loop) = 250.d0
 			loop = loop + 1
 		enddo
 
@@ -264,9 +299,9 @@ contains
 		endif
 		
 ! 		hyperB_i = 1.d0
- 		hypermu_i = 1.d0
- 		hyperf_i = 1.d0
- 		hyperphi_i = 1.d0
+!  		hypermu_i = 1.d0
+!  		hyperf_i = 1.d0
+!  		hyperphi_i = 1.d0
 		
  		logP = 0.d0
 		logPGradient = 0.d0
@@ -401,13 +436,45 @@ contains
 	subroutine writeHMCProcess(nVariables,x,v,g)
 	integer :: nVariables
 	real(kind=8), dimension(nVariables) :: x
-   real(kind=8), dimension(nVariables) :: g
+   real(kind=8), dimension(nVariables) :: g, meanOld
    real(kind=8) :: v, xwrite(8)
 	integer i
+			
+		meanOld = parsMean
+		parsMean = meanOld + (x - meanOld) / (nStep + 1.d0)		
+		parsVariance = (nStep - 1.d0) / nStep * parsVariance + (x - meanOld)**2 / (nStep+1.d0)**2 + (x - meanOld)**2 / nStep
 		
-	xwrite = x(4*nPixels+1:nVariables)
-	write(20) x!write
+		xwrite = x(4*nPixels+1:nVariables)
+		write(20) xwrite
+		
+		open(unit=21,file= "test.stddev",action='write',status='replace')
+		write(21,*) sqrt(parsVariance)
+		close(21)
+		
+		open(unit=21,file= "test.mean",action='write',status='replace')
+		write(21,*) parsMean
+		close(21)
+		
+		nStep = nStep + 1.d0
 				
 	end subroutine writeHMCProcess
+	
+!------------------------------------------------
+! A subroutine to write the extract file
+! I have assumed that the unit=20 is opened for
+! writing (append) earlier. In general only write
+! those parametes which are estimated. The files
+! can be really big depending on the dimensionality
+!------------------------------------------------
+	subroutine writeHMCProcessBurnin(nVariables,x,v,g)
+	integer :: nVariables
+	real(kind=8), dimension(nVariables) :: x
+   real(kind=8), dimension(nVariables) :: g, meanOld
+   real(kind=8) :: v, xwrite(8)
+	integer i
+							
+		write(20) x
+						
+	end subroutine writeHMCProcessBurnin
 
 end module samplingModule
