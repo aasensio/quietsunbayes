@@ -27,61 +27,49 @@ ch = np.fromfile('test.extract', dtype=np.float64).reshape((npar,nstep), order="
 length = len(ch[0,:])
 ch = ch[:,length/2:]
 
-fig1 = plt.figure(1, figsize=(13,10))
+fig1 = plt.figure(1, figsize=(15,10))
 plt.clf()
 
 loop = 1
-for i in range(8):
-	ax = fig1.add_subplot(4,4,loop)
+for i in range(6):
+	ax = fig1.add_subplot(3,5,loop)
 	ax.plot(ch[i,:])	
 	loop += 1
-	ax = fig1.add_subplot(4,4,loop)
+	ax = fig1.add_subplot(3,5,loop)
 	ax.hist(ch[i,:])
 	loop += 1
+	if ((i+1) % 2 == 0):
+		loop += 1
 	
-fig1.tight_layout()
-	
-fig2 = plt.figure(2)
-plt.clf()
-
 # Magnetic field strength
-B = np.linspace(0.1,2500,100)
+B = np.linspace(0.1,1200,100)
 pB = np.zeros(100)
 alpha = ch[0,:]
 beta = ch[1,:]
 pB = IGAvgPrior(B, alpha, beta)
-ax = fig2.add_subplot(2,2,1)
+ax = fig1.add_subplot(3,5,5)
 ax.plot(B,pB)
 
 # Inclination
-left = -1.0
-right = 1.0
+left = -1.0 + 1e-4
+right = 1.0 - 1e-4
 mu = np.linspace(left,right,100)
 pmu = np.zeros(100)
 alpha = ch[2,:]
 beta = ch[3,:]
 pmu = betaAvgPrior(mu, alpha, beta, left, right)
-ax = fig2.add_subplot(2,2,2)
+ax = fig1.add_subplot(3,5,10)
 ax.plot(mu,pmu)
 
 # Filling factor
-left = 0.0
-right = 1.0
+left = 0.0 + 1e-4
+right = 1.0 - 1e-4
 f = np.linspace(left, right, 100)
 pf = np.zeros(100)
 alpha = ch[4,:]
 beta = ch[5,:]
 pf = betaAvgPrior(f, alpha, beta, left, right)
-ax = fig2.add_subplot(2,2,3)
+ax = fig1.add_subplot(3,5,15)
 ax.plot(f,pf)
 
-# Azimuth
-left = 0.0
-right = np.pi
-phi = np.linspace(left, right, 100)
-pphi = np.zeros(100)
-alpha = ch[6,:]
-beta = ch[7,:]
-pphi = betaAvgPrior(phi, alpha, beta, left, right)
-ax = fig2.add_subplot(2,2,4)
-ax.plot(phi,pphi)
+fig1.tight_layout()

@@ -56,9 +56,7 @@ implicit none
 	allocate(mu_i(npixels))
 	allocate(f_i(npixels))
 	allocate(phi_i(npixels))
-	
-	allocate(sqrtMu(npixels))
-	allocate(dsqrtMudMu(npixels))
+		
 	allocate(c2p(npixels))
 	allocate(s2p(npixels))
 	
@@ -69,7 +67,7 @@ implicit none
 	
 ! Number of parameters
 ! - B, mu, f and phi for each pixel plus the hyperparameters
-	nVariables = nPixels * 4 + 6
+	nVariables = nPixels * 4 !+ 6
 	
 	allocate(parsOld(nVariables))
 	allocate(parsMean(nVariables))

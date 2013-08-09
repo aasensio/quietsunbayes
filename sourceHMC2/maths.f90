@@ -347,29 +347,5 @@ contains
 		enddo
 		
 	end function logSumVector
-	
-!-----------------------------------------------------------------------
-! Return a sigmoid function
-!-----------------------------------------------------------------------
-	function sigmoid(x, lower, upper)
-	real(kind=8) :: x(:), sigmoid(size(x)), lower, upper
-		sigmoid = lower + (upper-lower) / (1.d0 + exp(-x))
-	end function sigmoid
-
-!-----------------------------------------------------------------------
-! Return the inverse of the sigmoid function
-!-----------------------------------------------------------------------
-	function invSigmoid(x, lower, upper)
-	real(kind=8) :: x(:), invsigmoid(size(x)), lower, upper
-		invSigmoid = log( (lower - x) / (x - upper) )
-	end function invSigmoid
-
-!-----------------------------------------------------------------------
-! Return the derivative of the sigmoid function
-!-----------------------------------------------------------------------
-	function diffSigmoid(x, lower, upper)
-	real(kind=8) :: x(:), diffSigmoid(size(x)), lower, upper
-		diffSigmoid = (upper-lower) * exp(-x) / (1.d0+exp(-x))**2
-	end function diffSigmoid
 
 end module mathsModule

@@ -25,24 +25,16 @@ contains
 		loop = 1
 		l(1:nPixels) = BMin
 		u(1:nPixels) = BMax
-		x(1:nPixels) = 300.d0
 		
 		l(nPixels+1:2*nPixels) = muMin + 1.d-3
 		u(nPixels+1:2*nPixels) = muMax - 1.d-3
-		x(nPixels+1:2*nPixels) = 0.1d0
 		
 		l(2*nPixels+1:3*nPixels) = fMin - 1.d-3
 		u(2*nPixels+1:3*nPixels) = fMax + 1.d-3
-		x(2*nPixels+1:3*nPixels) = 0.5d0
 		
 		l(3*nPixels+1:4*nPixels) = phiMin - 1.d-3
 		u(3*nPixels+1:4*nPixels) = phiMax + 1.d-3
-		x(3*nPixels+1:4*nPixels) = 0.2d0
-				
-		l(4*nPixels+1:4*nPixels+6) = 0.d0
-		u(4*nPixels+1:4*nPixels+6) = 1000.d0
-		x(4*nPixels+1:4*nPixels+6) = 1.5d0
-		
+								
 ! Geodesic Levenberg-Marquardt
 		mmax = 10
 
@@ -67,8 +59,8 @@ contains
 
 ! New iterate and continue the iteration
 			if (task(1:5) == 'NEW_X') then
-				open(unit=15,file='jacobian',status='replace',action='write')
-				write(15,*) g
+				open(unit=15,file='bestPars',status='replace',action='write')
+				write(15,*) x
 				close(15)
 			endif
 		enddo

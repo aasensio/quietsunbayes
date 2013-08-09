@@ -2,7 +2,6 @@ module samplingModule
 use varsModule
 use likelihoodModule, only : negLogPosterior, writeHMCProcess, writeHMCProcessBurnin
 use maximumlikelihoodModule, only : getMaximumLikelihood
-use mathsModule, only : invSigmoid
 implicit none
 contains
 
@@ -16,24 +15,24 @@ contains
 	integer :: seed, fbInt, maxStep, resume, nburn, i, nStepsBurn
 	character(len=128) :: flPfx
 	
-		scaleFactor = 0.05d0
+		scaleFactor = 0.5d0
 		seed = 1234
 		fbInt = 10
-		maxStep = 10
+		maxStep = 1
 		if (action(1:4) == 'CONT') then
 			resume = 1
 		else
 			resume = 0
 		endif
 		nburn = 0
-		flPfx = 'test'
+		flPfx = 'test            '
 		
 		allocate(st(nVariables))
 		allocate(stepSize(nVariables))
 				
 		if (resume == 0) then
-			call initialValuesWeakField(st, stepSize)			
-! 			call getMaximumLikelihood(st)
+			call initialValuesWeakField(st, stepSize)
+!  			call getMaximumLikelihood(st)
 								
 			parsOld = st		
 			nStep = 1
@@ -91,7 +90,6 @@ contains
 		endif
 		
 		maxStep = 10
-		scaleFactor = 0.1d0
 		
 		if (resume == 0) then					
 			open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')
@@ -117,84 +115,53 @@ contains
 	real(kind=8) :: pars(:), stepSize(:)
 	integer :: loop, i, j
 	real(kind=8) :: value
-	real(kind=8), allocatable :: Bpar(:), Bperp(:), azimuth(:), BModulus(:), fillFactor(:)
+	real(kind=8), allocatable :: Bpar(:), Bperp(:), azimuth(:)
 
 		loop = 1
 		
 		allocate(Bpar(npixels))
 		allocate(Bperp(npixels))
 		allocate(azimuth(npixels))
-		allocate(BModulus(npixels))
-		allocate(fillFactor(npixels))
 		
 ! Compute maximum-likelihood solution
 		Bpar = 0.5d0 * CV3 / CV2
 		Bperp = sqrt(0.5d0 * sqrt(CQ3**2 + CU3**2) / CQ2)
-		BModulus = sqrt(Bpar**2 + Bperp**2) / 0.5d0
-		azimuth = 0.5d0 * atan2(CU3, CQ3)
-		fillFactor = 0.5d0
 		
-		where (BModulus > BMax)
-			BModulus = BMax - 200.d0
-		endwhere
-		where (BModulus < BMin)
-			BModulus = BMin + 200.d0
-		endwhere
-		
-		where (azimuth < 0.d0)
-			azimuth = azimuth + PI
-		endwhere
-							
+		do i = 1, npixels
+			azimuth(i) = 0.5d0 * atan2(CU3(i), CQ3(i))
+ 			if (azimuth(i) < 0.d0) azimuth(i) = azimuth(i) + PI
+		enddo
+					
 ! B
-		pars(1:nPixels) = BModulus
-		stepSize = 40.d0		
+		do i = 1, npixels
+			pars(loop) = sqrt(Bpar(i)**2 + Bperp(i)**2) / 0.5
+			if (pars(loop) > Bmax) pars(loop) = Bmax - 200.d0
+			if (pars(loop) < BMin) pars(loop) = BMin + 200.d0
+			stepSize(loop) = 40.d0			
+			loop = loop + 1
+		enddo		
 
 ! mu
-		pars(nPixels+1:2*nPixels) = invSigmoid(cos(atan2(Bperp,Bpar)), muMin, muMax)
-		stepSize = 0.1d0
+		do i = 1, npixels
+			pars(loop) = cos(atan2(Bperp(i),Bpar(i)))
+			stepSize(loop) = 0.1d0
+			loop = loop + 1
+		enddo				
 		
 ! f
-		pars(2*nPixels+1:3*nPixels) = invSigmoid(fillFactor, fMin, fMax)
-		stepSize = 0.1d0
+		do i = 1, npixels
+			pars(loop) = 0.5d0
+			stepSize(loop) = 0.3d0
+			loop = loop + 1
+		enddo
 		
 ! phi
-		pars(3*nPixels+1:4*nPixels) = invSigmoid(azimuth, phiMin, phiMax)
-		stepSize = 0.1d0
-		
-		loop = 4*nPixels + 1
-! hyperB	
-		pars(loop) = 1.d0
-		stepSize(loop) = 2.2d0
-		loop = loop + 1
-		
-		pars(loop) = 140.d0
-		stepSize(loop) = 20.d0
-		loop = loop + 1
-				
-! hypermu
-		pars(loop) = 20.5d0
-		stepSize(loop) = 10.d0
-		loop = loop + 1
-		
-		pars(loop) = 20.5d0
-		stepSize(loop) = 10.d0
-		loop = loop + 1
-		
-! hyperf		
-		pars(loop) = 8.d0
-		stepSize(loop) = 5.d0
-		loop = loop + 1
-		
-		pars(loop) = 20.5d0
-		stepSize(loop) = 10.d0
-		loop = loop + 1
-		
-		deallocate(Bpar)
-		deallocate(Bperp)
-		deallocate(azimuth)
-		deallocate(BModulus)
-		deallocate(fillFactor)
-						
+		do i = 1, npixels
+			pars(loop) = azimuth(i)
+			stepSize(loop) = 2.0d0
+			loop = loop + 1
+		enddo
+								
 	end subroutine initialValuesWeakField
 	
 end module samplingModule

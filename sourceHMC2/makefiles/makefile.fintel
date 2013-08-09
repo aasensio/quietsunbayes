@@ -1,0 +1,2 @@
+COMPILER_F90 = ifort
+OPTIONS_F90 = -c -O3
