@@ -16,7 +16,7 @@ contains
 	integer :: seed, fbInt, maxStep, resume, nburn, i, nStepsBurn
 	character(len=128) :: flPfx
 	
-		scaleFactor = 0.05d0
+		scaleFactor = 0.2d0
 		seed = 1234
 		fbInt = 10
 		maxStep = 10
@@ -91,7 +91,7 @@ contains
 		endif
 		
 		maxStep = 10
-		scaleFactor = 0.1d0
+		scaleFactor = 0.5d0
 		
 		if (resume == 0) then					
 			open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')
@@ -129,10 +129,10 @@ contains
 		
 ! Compute maximum-likelihood solution
 		Bpar = 0.5d0 * CV3 / CV2
-		Bperp = sqrt(0.5d0 * sqrt(CQ3**2 + CU3**2) / CQ2)
-		BModulus = sqrt(Bpar**2 + Bperp**2) / 0.5d0
+		Bperp = sqrt(0.5d0 * sqrt(CQ3**2 + CU3**2) / CQ2)		
 		azimuth = 0.5d0 * atan2(CU3, CQ3)
-		fillFactor = 0.5d0
+		fillFactor = 0.3d0
+		BModulus = sqrt(Bpar**2 + Bperp**2) / fillFactor
 		
 		where (BModulus > BMax)
 			BModulus = BMax - 200.d0
@@ -147,19 +147,19 @@ contains
 							
 ! B
 		pars(1:nPixels) = BModulus
-		stepSize = 40.d0		
+		stepSize = 100.d0		
 
 ! mu
 		pars(nPixels+1:2*nPixels) = invSigmoid(cos(atan2(Bperp,Bpar)), muMin, muMax)
-		stepSize = 0.1d0
+		stepSize = 2.d0
 		
 ! f
 		pars(2*nPixels+1:3*nPixels) = invSigmoid(fillFactor, fMin, fMax)
-		stepSize = 0.1d0
+		stepSize = 2.d0
 		
 ! phi
 		pars(3*nPixels+1:4*nPixels) = invSigmoid(azimuth, phiMin, phiMax)
-		stepSize = 0.1d0
+		stepSize = 2.d0
 		
 		loop = 4*nPixels + 1
 ! hyperB	

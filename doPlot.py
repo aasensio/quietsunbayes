@@ -5,16 +5,17 @@ import scipy.special as sp
 def betaAvgPrior(x, alpha, beta, left, right):
 	Beta = sp.beta(alpha, beta)
 	pf = np.zeros(len(x))
-	for i in range(len(x)):		
-		y = (right-left)**(1.0-alpha-beta) / Beta * (x[i] - left)**(alpha-1.0) * (right - x[i])**(beta-1.0)
-		pf[i] = np.mean(y)
+	for i in range(len(x)):
+		ylog = ( (1.0-alpha-beta) * np.log(right-left) - (sp.gammaln(alpha) + sp.gammaln(beta) - sp.gammaln(alpha+beta)) +
+			(alpha-1.0) * np.log(x[i] - left) + (beta-1.0) * np.log(right - x[i]) )		
+		pf[i] = np.mean(np.exp(ylog))
 	return pf
 
 def IGAvgPrior(x, alpha, beta):
 	pf = np.zeros(len(x))
 	for i in range(len(x)):		
-		y = beta**alpha / sp.gamma(alpha) * x[i]**(-(alpha+1.0)) * np.exp(-beta/x[i])
-		pf[i] = np.mean(y)
+		logy = alpha * np.log(beta) - sp.gammaln(alpha) + (-(alpha+1.0)) * np.log(x[i]) -beta/x[i]
+		pf[i] = np.mean(np.exp(logy))
 	return pf
 	
 f = open('posterior.sizes', 'r')
@@ -51,9 +52,9 @@ ax = fig1.add_subplot(3,5,5)
 ax.plot(B,pB)
 
 # Inclination
-left = -1.0 + 1e-4
-right = 1.0 - 1e-4
-mu = np.linspace(left,right,100)
+left = -1.0
+right = 1.0
+mu = np.linspace(left + 1e-4,right - 1e-4,100)
 pmu = np.zeros(100)
 alpha = ch[2,:]
 beta = ch[3,:]
@@ -62,9 +63,9 @@ ax = fig1.add_subplot(3,5,10)
 ax.plot(mu,pmu)
 
 # Filling factor
-left = 0.0 + 1e-4
-right = 1.0 - 1e-4
-f = np.linspace(left, right, 100)
+left = 0.0
+right = 1.0
+f = np.linspace(left + 1e-4, right - 1e-4, 100)
 pf = np.zeros(100)
 alpha = ch[4,:]
 beta = ch[5,:]

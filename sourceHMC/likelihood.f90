@@ -136,14 +136,14 @@ contains
 !-------------
 ! Beta(f; a, b, 0, pi) for f
 !-------------
-		logP = logP + sum( (hyperf_i(1)-1.d0) * log(f_i - fMin) + (hyperf_i(2)-1.d0) * log(fMax-f_i) + (1.d0-hyperf_i(1)-hyperf_i(2)) * log(fMax - fMin) - &
-			(alngam(hyperf_i(1),ierr) + alngam(hyperf_i(2),ierr) - alngam(hyperf_i(1)+hyperf_i(2),ierr)) )
-! dBeta/df_i
-		logPGradient(2*nPixels+1:3*nPixels) = logPGradient(2*nPixels+1:3*nPixels) + (1.d0 - hyperf_i(2)) / (fMax - f_i) + (hyperf_i(1) - 1.d0) / (f_i - fMin)
-! dBeta/dalpha
-		logPGradient(4*nPixels+5) = sum( -log(fMax - fMin) + log(f_i - fMin) - digama(hyperf_i(1), ierr) + digama(hyperf_i(1)+hyperf_i(2), ierr) )
-! dBeta/dbeta
-		logPGradient(4*nPixels+6) = sum( -log(fMax - fMin) + log(fMax - f_i) - digama(hyperf_i(2), ierr) + digama(hyperf_i(1)+hyperf_i(2), ierr) )
+! 		logP = logP + sum( (hyperf_i(1)-1.d0) * log(f_i - fMin) + (hyperf_i(2)-1.d0) * log(fMax - f_i) + (1.d0-hyperf_i(1)-hyperf_i(2)) * log(fMax - fMin) - &
+! 			(alngam(hyperf_i(1),ierr) + alngam(hyperf_i(2),ierr) - alngam(hyperf_i(1)+hyperf_i(2),ierr)) )
+! ! dBeta/df_i
+! 		logPGradient(2*nPixels+1:3*nPixels) = logPGradient(2*nPixels+1:3*nPixels) + (1.d0 - hyperf_i(2)) / (fMax - f_i) + (hyperf_i(1) - 1.d0) / (f_i - fMin)
+! ! dBeta/dalpha
+! 		logPGradient(4*nPixels+5) = sum( -log(fMax - fMin) + log(f_i - fMin) - digama(hyperf_i(1), ierr) + digama(hyperf_i(1)+hyperf_i(2), ierr) )
+! ! dBeta/dbeta
+! 		logPGradient(4*nPixels+6) = sum( -log(fMax - fMin) + log(fMax - f_i) - digama(hyperf_i(2), ierr) + digama(hyperf_i(1)+hyperf_i(2), ierr) )
 			
 !-------------
 ! It is a scale parameter so we use a Jeffreys' prior
@@ -158,18 +158,16 @@ contains
 		logPGradient(4*nPixels+3) = logPGradient(4*nPixels+3) - 2.5d0 / sum(hypermu_i)
 		logPGradient(4*nPixels+4) = logPGradient(4*nPixels+4) - 2.5d0 / sum(hypermu_i)
 		
-		logP = logP - 2.5d0 * log(sum(hyperf_i))
-		logPGradient(4*nPixels+5) = logPGradient(4*nPixels+5) - 2.5d0 / sum(hyperf_i)
-		logPGradient(4*nPixels+6) = logPGradient(4*nPixels+6) - 2.5d0 / sum(hyperf_i)
+! 		logP = logP - 2.5d0 * log(sum(hyperf_i))
+! 		logPGradient(4*nPixels+5) = logPGradient(4*nPixels+5) - 2.5d0 / sum(hyperf_i)
+! 		logPGradient(4*nPixels+6) = logPGradient(4*nPixels+6) - 2.5d0 / sum(hyperf_i)
 		
 		
 !-----------------
 ! DATA LOG-LIKELIHOOD
 !-----------------
 		c2p = cos(2.d0 * phi_i)
-		s2p = sin(2.d0 * phi_i)
-		sqrtMu = sqrt(1.d0-mu_i**2)
-		dsqrtMudMu = -mu_i / sqrtMu
+		s2p = sin(2.d0 * phi_i)		
 		
   		logP = logP - 0.5d0 / sigma_n**2 * (&
 			sum( CV1 + (B_i * mu_i * f_i)**2 * CV2 - (B_i * mu_i * f_i) * CV3 ) + &
