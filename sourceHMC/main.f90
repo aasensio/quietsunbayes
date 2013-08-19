@@ -5,7 +5,7 @@ use varsModule
 use mathsModule, only : digama
 implicit none
 	
-	integer :: i, nargs
+	integer :: i, j, nargs
 	character(len=100) :: action, arg
 	character(len=128) :: fileObs
 	
@@ -25,6 +25,8 @@ implicit none
 		read(arg,*) nSteps
 	endif
 	
+	allocate(hyperparRanges(2,3))
+	
 ! Read ranges of parameters
 	open(unit=12,file='conf.dat',action='read',status='old')
 	read(12,*)
@@ -35,6 +37,11 @@ implicit none
 	read(12,*) muMin, muMax
 	read(12,*) fMin, fMax
 	read(12,*) phiMin, phiMax
+	read(12,*)
+	read(12,*)
+	do i = 1, 3
+		read(12,*) (hyperparRanges(j,i),j=1,2)
+	enddo
 	close(12)
 	
 	print *, 'B range : ', BMin, BMax
@@ -72,6 +79,7 @@ implicit none
 	nVariables = nPixels * 4 + 6
 	
 	allocate(parsOld(nVariables))
+	allocate(parsInitial(nVariables))
 	allocate(parsMean(nVariables))
 	allocate(parsVariance(nVariables))
 	

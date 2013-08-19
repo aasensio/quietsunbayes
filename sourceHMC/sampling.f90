@@ -16,7 +16,7 @@ contains
 	integer :: seed, fbInt, maxStep, resume, nburn, i, nStepsBurn
 	character(len=128) :: flPfx
 	
-		scaleFactor = 0.2d0
+		scaleFactor = 0.5d0
 		seed = 1234
 		fbInt = 10
 		maxStep = 10
@@ -32,10 +32,13 @@ contains
 		allocate(stepSize(nVariables))
 				
 		if (resume == 0) then
-			call initialValuesWeakField(st, stepSize)			
-! 			call getMaximumLikelihood(st)
-								
-			parsOld = st		
+			call initialValuesWeakField(st, stepSize)
+			
+			stepSize = stepSize / maxStep
+!  			call getMaximumLikelihood(st)
+ 											
+			parsOld = st
+			parsInitial = st
 			nStep = 1
 			parsVariance = 0.d0
 			parsMean = 0.d0
@@ -50,12 +53,12 @@ contains
 ! 				st2 = st
 ! 				st2(i) = st(i) + 1.d-6
 ! 				call negLogPosterior(nVariables,st2,logP2,logPGradientNew)
-! 				print *, (logP2 - logP) / 1.d-6, logPGradient(i)
+! 				print *, i, (logP2 - logP) / 1.d-6, logPGradient(i)
 ! 			enddo
 ! 			stop
 
 			open(unit=20,file= flPfx(1:len_trim(flPfx))//".burnin",action='write',status='replace',access='stream')		
-			nStepsBurn = 200
+			nStepsBurn = 500
 			call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,resume,&
 				fbInt, negLogPosterior, writeHMCProcessBurnin, nBurn, nStepsBurn)			
 			close(20)
@@ -84,7 +87,7 @@ contains
 			
 			open(unit=20,file='variances',action='write',status='replace')
 			do i = 1, nVariables
-				write(20,*) parsMean(i), stepSize(i)
+				write(20,FMT='(I4,1X,F12.3,1X,F12.3,1X,F12.3)') i, parsMean(i), parsInitial(i), stepSize(i)
 			enddo
 			close(20)
 		
@@ -92,6 +95,8 @@ contains
 		
 		maxStep = 10
 		scaleFactor = 0.5d0
+		
+		stepSize = stepSize / maxStep	
 		
 		if (resume == 0) then					
 			open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')
@@ -118,8 +123,6 @@ contains
 	integer :: loop, i, j
 	real(kind=8) :: value
 	real(kind=8), allocatable :: Bpar(:), Bperp(:), azimuth(:), BModulus(:), fillFactor(:)
-
-		loop = 1
 		
 		allocate(Bpar(npixels))
 		allocate(Bperp(npixels))
@@ -131,7 +134,10 @@ contains
 		Bpar = 0.5d0 * CV3 / CV2
 		Bperp = sqrt(0.5d0 * sqrt(CQ3**2 + CU3**2) / CQ2)		
 		azimuth = 0.5d0 * atan2(CU3, CQ3)
-		fillFactor = 0.3d0
+		do i = 1, npixels
+			call random_number(value)
+			fillFactor(i) = 0.4 * value
+		enddo
 		BModulus = sqrt(Bpar**2 + Bperp**2) / fillFactor
 		
 		where (BModulus > BMax)
@@ -146,49 +152,43 @@ contains
 		endwhere
 							
 ! B
-		pars(1:nPixels) = BModulus
-		stepSize = 100.d0		
+		pars(1:nPixels) = invSigmoid(BModulus, BMin, BMax)
+		stepSize(1:nPixels) = 1.d0
 
 ! mu
 		pars(nPixels+1:2*nPixels) = invSigmoid(cos(atan2(Bperp,Bpar)), muMin, muMax)
-		stepSize = 2.d0
+		stepSize(nPixels+1:2*nPixels) = 1.d0
 		
 ! f
 		pars(2*nPixels+1:3*nPixels) = invSigmoid(fillFactor, fMin, fMax)
-		stepSize = 2.d0
+		stepSize(2*nPixels+1:3*nPixels) = 1.d0
 		
 ! phi
 		pars(3*nPixels+1:4*nPixels) = invSigmoid(azimuth, phiMin, phiMax)
-		stepSize = 2.d0
+		stepSize(3*nPixels+1:4*nPixels) = 1.d0
 		
-		loop = 4*nPixels + 1
-! hyperB	
-		pars(loop) = 1.d0
-		stepSize(loop) = 2.2d0
-		loop = loop + 1
 		
-		pars(loop) = 140.d0
-		stepSize(loop) = 20.d0
-		loop = loop + 1
-				
+! hyperB
+		pars(4*nPixels+1) = invSigmoid(4.d0, 0.d0, hyperparRanges(1,1))
+		stepSize(4*nPixels+1) = 1.d0
+		
+		pars(4*nPixels+2) = invSigmoid(600.d0, 0.d0, hyperparRanges(2,1))
+		stepSize(4*nPixels+2) = 1.d0
+		
 ! hypermu
-		pars(loop) = 20.5d0
-		stepSize(loop) = 10.d0
-		loop = loop + 1
+		pars(4*nPixels+3) = invSigmoid(2.d0, 0.d0, hyperparRanges(1,2))
+		stepSize(4*nPixels+3) = 0.5d0
 		
-		pars(loop) = 20.5d0
-		stepSize(loop) = 10.d0
-		loop = loop + 1
+		pars(4*nPixels+4) = invSigmoid(2.d0, 0.d0, hyperparRanges(2,2))
+		stepSize(4*nPixels+4) = 0.5d0
 		
-! hyperf		
-		pars(loop) = 8.d0
-		stepSize(loop) = 5.d0
-		loop = loop + 1
+! hyperf
+		pars(4*nPixels+5) = invSigmoid(1.d0, 0.d0, hyperparRanges(1,3))
+		stepSize(4*nPixels+5) = 1.d0
 		
-		pars(loop) = 20.5d0
-		stepSize(loop) = 10.d0
-		loop = loop + 1
-		
+		pars(4*nPixels+6) = invSigmoid(1.d0, 0.d0, hyperparRanges(2,3))
+		stepSize(4*nPixels+6) = 1.d0
+				
 		deallocate(Bpar)
 		deallocate(Bperp)
 		deallocate(azimuth)

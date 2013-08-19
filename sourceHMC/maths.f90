@@ -1,6 +1,19 @@
 module mathsModule
 implicit none
 
+! Overloading the functions
+interface sigmoid
+  module procedure sigmoidVector, sigmoidScalar
+end interface
+
+interface invSigmoid
+  module procedure invsigmoidVector, invSigmoidScalar
+end interface
+
+interface diffSigmoid
+  module procedure diffSigmoidVector, diffSigmoidScalar
+end interface
+
 contains
 
 !------------------------------------------------------------------
@@ -351,25 +364,49 @@ contains
 !-----------------------------------------------------------------------
 ! Return a sigmoid function
 !-----------------------------------------------------------------------
-	function sigmoid(x, lower, upper)
-	real(kind=8) :: x(:), sigmoid(size(x)), lower, upper
-		sigmoid = lower + (upper-lower) / (1.d0 + exp(-x))
-	end function sigmoid
+	function sigmoidVector(x, lower, upper)
+	real(kind=8) :: x(:), sigmoidVector(size(x)), lower, upper
+		sigmoidVector = lower + (upper-lower) / (1.d0 + exp(-x))
+	end function sigmoidVector
+	
+!-----------------------------------------------------------------------
+! Return a sigmoid function
+!-----------------------------------------------------------------------
+	function sigmoidScalar(x, lower, upper)
+	real(kind=8) :: x, sigmoidScalar, lower, upper
+		sigmoidScalar = lower + (upper-lower) / (1.d0 + exp(-x))
+	end function sigmoidScalar
 
 !-----------------------------------------------------------------------
 ! Return the inverse of the sigmoid function
 !-----------------------------------------------------------------------
-	function invSigmoid(x, lower, upper)
-	real(kind=8) :: x(:), invsigmoid(size(x)), lower, upper
-		invSigmoid = log( (lower - x) / (x - upper) )
-	end function invSigmoid
+	function invSigmoidVector(x, lower, upper)
+	real(kind=8) :: x(:), invsigmoidVector(size(x)), lower, upper
+		invSigmoidVector = log( (lower - x) / (x - upper) )
+	end function invSigmoidVector
+	
+!-----------------------------------------------------------------------
+! Return the inverse of the sigmoid function
+!-----------------------------------------------------------------------
+	function invSigmoidScalar(x, lower, upper)
+	real(kind=8) :: x, invsigmoidScalar, lower, upper
+		invSigmoidScalar = log( (lower - x) / (x - upper) )
+	end function invSigmoidScalar
 
 !-----------------------------------------------------------------------
 ! Return the derivative of the sigmoid function
 !-----------------------------------------------------------------------
-	function diffSigmoid(x, lower, upper)
-	real(kind=8) :: x(:), diffSigmoid(size(x)), lower, upper
-		diffSigmoid = (upper-lower) * exp(-x) / (1.d0+exp(-x))**2
-	end function diffSigmoid
+	function diffSigmoidVector(x, lower, upper)
+	real(kind=8) :: x(:), diffSigmoidVector(size(x)), lower, upper
+		diffSigmoidVector = (upper-lower) * exp(-x) / (1.d0+exp(-x))**2
+	end function diffSigmoidVector
+	
+!-----------------------------------------------------------------------
+! Return the derivative of the sigmoid function
+!-----------------------------------------------------------------------
+	function diffSigmoidScalar(x, lower, upper)
+	real(kind=8) :: x, diffSigmoidScalar, lower, upper
+		diffSigmoidScalar = (upper-lower) * exp(-x) / (1.d0+exp(-x))**2
+	end function diffSigmoidScalar
 
 end module mathsModule

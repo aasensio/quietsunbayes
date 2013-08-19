@@ -10,6 +10,8 @@ implicit none
 		
 	real(kind=8), allocatable, dimension(:) :: B_i, mu_i, phi_i, f_i, hyperB_i, hypermu_i, hyperphi_i, hyperf_i, parsToSave
 	
-	real(kind=8), allocatable, dimension(:) :: c2p, s2p, sqrtMu, dsqrtMudMu, parsOld, parsMean, parsVariance
+	real(kind=8), allocatable, dimension(:) :: c2p, s2p, sqrtMu, dsqrtMudMu, parsOld, parsMean, parsVariance, parsInitial
+	
+	real(kind=8), allocatable, dimension(:,:) :: hyperparRanges
 
 end module varsModule

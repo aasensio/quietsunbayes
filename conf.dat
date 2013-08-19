@@ -6,3 +6,8 @@
 -1.d0  1.d0 
 0.d0  1.d0 
 0.d0  3.141592d0 
+
+# Upper limit of hyperparameters
+10.d0 800.d0
+5.d0 5.d0
+200.d0 200.d0

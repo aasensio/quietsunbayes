@@ -40,7 +40,7 @@ contains
 		x(3*nPixels+1:4*nPixels) = 0.2d0
 				
 		l(4*nPixels+1:4*nPixels+6) = 0.d0
-		u(4*nPixels+1:4*nPixels+6) = 1000.d0
+		u(4*nPixels+1:4*nPixels+6) = 5000.d0
 		x(4*nPixels+1:4*nPixels+6) = 1.5d0
 		
 ! Geodesic Levenberg-Marquardt

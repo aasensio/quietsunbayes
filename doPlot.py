@@ -28,28 +28,35 @@ ch = np.fromfile('test.extract', dtype=np.float64).reshape((npar,nstep), order="
 length = len(ch[0,:])
 ch = ch[:,length/2:]
 
-fig1 = plt.figure(1, figsize=(15,10))
+fig1 = plt.figure(1, figsize=(17,10))
 plt.clf()
 
 loop = 1
+labels = [r'$\alpha_B$',r'$\beta_B$',r'$\alpha_\mu$',r'$\beta_\mu$',r'$\alpha_f$',r'$\beta_f$']
 for i in range(6):
 	ax = fig1.add_subplot(3,5,loop)
-	ax.plot(ch[i,:])	
+	ax.plot(ch[i,:])
+	ax.set_xlabel('Iteration')
+	ax.set_ylabel(labels[i])
 	loop += 1
 	ax = fig1.add_subplot(3,5,loop)
 	ax.hist(ch[i,:])
+	ax.set_xlabel(labels[i])
+	ax.set_ylabel('p('+labels[i]+')')
 	loop += 1
 	if ((i+1) % 2 == 0):
 		loop += 1
 	
 # Magnetic field strength
-B = np.linspace(0.1,1200,100)
+B = np.linspace(0.1,1700,100)
 pB = np.zeros(100)
 alpha = ch[0,:]
 beta = ch[1,:]
 pB = IGAvgPrior(B, alpha, beta)
 ax = fig1.add_subplot(3,5,5)
 ax.plot(B,pB)
+ax.set_xlabel(r'B [G]')
+ax.set_ylabel(r'p(B)')
 
 # Inclination
 left = -1.0
@@ -61,6 +68,8 @@ beta = ch[3,:]
 pmu = betaAvgPrior(mu, alpha, beta, left, right)
 ax = fig1.add_subplot(3,5,10)
 ax.plot(mu,pmu)
+ax.set_xlabel(r'$\mu$')
+ax.set_ylabel(r'p($\mu$)')
 
 # Filling factor
 left = 0.0
@@ -72,5 +81,7 @@ beta = ch[5,:]
 pf = betaAvgPrior(f, alpha, beta, left, right)
 ax = fig1.add_subplot(3,5,15)
 ax.plot(f,pf)
+ax.set_xlabel('f')
+ax.set_ylabel('p(f)')
 
 fig1.tight_layout()
