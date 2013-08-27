@@ -21,7 +21,7 @@ contains
 		fbInt = 10
 		maxStep = 10
 		if (action(1:4) == 'CONT') then
-			resume = 1		
+			resume = 1
 		else
 			resume = 0
 		endif
@@ -30,13 +30,11 @@ contains
 		
 		allocate(st(nVariables))
 		allocate(stepSize(nVariables))
-		
-		nStepsBurn = 250
 				
 		if (resume == 0) then
 			call initialValuesWeakField(st, stepSize)
 			
- 			stepSize = stepSize / maxStep
+			stepSize = stepSize / maxStep
 !  			call getMaximumLikelihood(st)
  											
 			parsOld = st
@@ -59,90 +57,61 @@ contains
 ! 			enddo
 ! 			stop
 
-			open(unit=20,file= flPfx(1:len_trim(flPfx))//".burnin",action='write',status='replace',access='stream')					
-			call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,0,&
+			open(unit=20,file= flPfx(1:len_trim(flPfx))//".burnin",action='write',status='replace',access='stream')		
+			nStepsBurn = 500
+			call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,resume,&
 				fbInt, negLogPosterior, writeHMCProcessBurnin, nBurn, nStepsBurn)			
 			close(20)
-		endif
 			
-! Estimate width of distributions
-		open(unit=20,file=flPfx(1:len_trim(flPfx))//".burnin",action='read',status='old',access='stream')
-		parsMean = 0.d0
-		parsVariance = 0.d0
-		nStep = 1
-		allocate(meanOld(nVariables))
-		do i = 1, nStepsBurn
-			read(20) st
-			if (i > 100) then
-				meanOld = parsMean
-				parsMean = meanOld + (st - meanOld) / (nStep + 1.d0)		
-				parsVariance = (nStep - 1.d0) / nStep * parsVariance + (st - meanOld)**2 / (nStep+1.d0)**2 + (st - meanOld)**2 / nStep
-				nStep = nStep + 1
-			endif
-		enddo		
-		deallocate(meanOld)
+	! Estimate width of distributions
+			open(unit=20,file=flPfx(1:len_trim(flPfx))//".burnin",action='read',status='old',access='stream')
+			parsMean = 0.d0
+			parsVariance = 0.d0
+			nStep = 1
+			allocate(meanOld(nVariables))
+			do i = 1, nStepsBurn
+				read(20) st
+				if (i > 100) then
+					meanOld = parsMean
+					parsMean = meanOld + (st - meanOld) / (nStep + 1.d0)		
+					parsVariance = (nStep - 1.d0) / nStep * parsVariance + (st - meanOld)**2 / (nStep+1.d0)**2 + (st - meanOld)**2 / nStep
+					nStep = nStep + 1
+				endif
+			enddo		
+			deallocate(meanOld)
+			
+			close(20)
+			
+			stepSize = sqrt(parsVariance)
+			st = parsMean
+			
+			open(unit=20,file='variances',action='write',status='replace')
+			do i = 1, nVariables
+				write(20,FMT='(I4,1X,F12.3,1X,F12.3,1X,F12.3)') i, parsMean(i), parsInitial(i), stepSize(i)
+			enddo
+			close(20)
 		
-		close(20)
+		endif
 		
-		stepSize = sqrt(parsVariance)
-		st = parsMean
-		
-		open(unit=20,file='variances',action='write',status='replace')
-		do i = 1, nVariables
-			write(20,FMT='(I4,1X,F12.3,1X,F12.3,1X,F12.3)') i, parsMean(i), parsInitial(i), stepSize(i)
-		enddo
-		close(20)
-				
 		maxStep = 10
 		scaleFactor = 0.5d0
 		
-! hyperB
-		st(4*nPixels+1) = invSigmoid(1.3d0, 0.d0, hyperparRanges(1,1))
-		stepSize(4*nPixels+1) = 0.3d0
-		
-		st(4*nPixels+2) = invSigmoid(30.d0, 0.d0, hyperparRanges(2,1))
-		stepSize(4*nPixels+2) = 0.3d0
-		
-! hypermu
-		st(4*nPixels+3) = invSigmoid(0.2d0, 0.d0, hyperparRanges(1,2))
-		stepSize(4*nPixels+3) = 0.5d0
-		
-		st(4*nPixels+4) = invSigmoid(0.2d0, 0.d0, hyperparRanges(2,2))
-		stepSize(4*nPixels+4) = 0.5d0
-		
-  		stepSize = stepSize / maxStep
+		stepSize = stepSize / maxStep	
 		
 		if (resume == 0) then					
-			open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')			
+			open(unit=20,file= (trim(flPfx)//".extract"),action='write',status='replace',access='stream')
+			open(unit=21,file= (trim(flPfx)//".extract2"),action='write',status='replace',access='stream')
 		else
-			open(unit=20,file='final.parameters',action='read',status='old',access='stream')
-			read(20) st
-			close(20)
-			open(unit=20,file= (trim(flPfx)//".extract"),action='write',position='append',access='stream')			
+			open(unit=20,file= (trim(flPfx)//".extract"),action='write',position='append',access='stream')
 		endif
 		
-		call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,0,&
+		call run_guided_hmc(nVariables,st,scaleFactor,maxStep,stepSize,flPfx(1:len_trim(flPfx)),seed,resume,&
 			fbInt, negLogPosterior, writeHMCProcess, nBurn, nSteps)
 		close(20)
 		
-		if (resume == 0) then
-			open(unit=20,file='posterior.sizes',action='write',status='replace')
-			write(20,*) 4, nSteps
-			close(20)
-			open(unit=20,file='final.parameters',action='write',status='replace',access='stream')
-			write(20) st
-			close(20)
-		else
-			open(unit=20,file='posterior.sizes',action='read',status='old')
-			read(20,*) i, nStepsBurn
-			close(20)
-			open(unit=20,file='posterior.sizes',action='write',status='replace')
-			write(20,*) 4, nStepsBurn+nSteps
-			close(20)
-			open(unit=20,file='final.parameters',action='write',status='replace',access='stream')
-			write(20) st
-			close(20)
-		endif
+		open(unit=20,file='posterior.sizes',action='write',status='replace')
+		write(20,*) 6, nSteps
+		close(20)
 		
 	end subroutine doSampling
 	
@@ -167,7 +136,7 @@ contains
 		azimuth = 0.5d0 * atan2(CU3, CQ3)
 		do i = 1, npixels
 			call random_number(value)
-			fillFactor(i) = value
+			fillFactor(i) = 0.4 + 0.4 * value
 		enddo
 		BModulus = sqrt(Bpar**2 + Bperp**2) / fillFactor
 		
@@ -200,19 +169,26 @@ contains
 		
 		
 ! hyperB
-		pars(4*nPixels+1) = invSigmoid(1.3d0, 0.d0, hyperparRanges(1,1))
+		pars(4*nPixels+1) = invSigmoid(4.d0, 0.d0, hyperparRanges(1,1))
 		stepSize(4*nPixels+1) = 1.d0
 		
-		pars(4*nPixels+2) = invSigmoid(30.d0, 0.d0, hyperparRanges(2,1))
+		pars(4*nPixels+2) = invSigmoid(600.d0, 0.d0, hyperparRanges(2,1))
 		stepSize(4*nPixels+2) = 1.d0
 		
 ! hypermu
-		pars(4*nPixels+3) = invSigmoid(0.2d0, 0.d0, hyperparRanges(1,2))
-		stepSize(4*nPixels+3) = 1.d0
+		pars(4*nPixels+3) = invSigmoid(2.d0, 0.d0, hyperparRanges(1,2))
+		stepSize(4*nPixels+3) = 0.5d0
 		
-		pars(4*nPixels+4) = invSigmoid(0.2d0, 0.d0, hyperparRanges(2,2))
-		stepSize(4*nPixels+4) = 1.d0
+		pars(4*nPixels+4) = invSigmoid(2.d0, 0.d0, hyperparRanges(2,2))
+		stepSize(4*nPixels+4) = 0.5d0
 		
+! hyperf
+		pars(4*nPixels+5) = invSigmoid(1.d0, 0.d0, hyperparRanges(1,3))
+		stepSize(4*nPixels+5) = 1.d0
+		
+		pars(4*nPixels+6) = invSigmoid(1.d0, 0.d0, hyperparRanges(2,3))
+		stepSize(4*nPixels+6) = 1.d0
+				
 		deallocate(Bpar)
 		deallocate(Bperp)
 		deallocate(azimuth)

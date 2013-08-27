@@ -35,7 +35,10 @@ contains
 		
 		hypermu_i(1) = sigmoid(trial(4*nPixels+3), 0.d0, hyperparRanges(1,2))
 		hypermu_i(2) = sigmoid(trial(4*nPixels+4), 0.d0, hyperparRanges(2,2))
-												
+		
+		hyperf_i(1) = sigmoid(trial(4*nPixels+5), 0.d0, hyperparRanges(1,3))
+		hyperf_i(2) = sigmoid(trial(4*nPixels+6), 0.d0, hyperparRanges(2,3))
+										
  		logP = 0.d0
 		logPGradient = 0.d0
  		nu = 0.001d0
@@ -71,6 +74,18 @@ contains
 		
 
 !-------------
+! Beta(f; a, b, 0, pi) for f
+!-------------
+		logP = logP + sum( (hyperf_i(1)-1.d0) * log(f_i - fMin) + (hyperf_i(2)-1.d0) * log(fMax - f_i) ) + nPixels * (1.d0-hyperf_i(1)-hyperf_i(2)) * log(fMax - fMin) - &
+			nPixels * (alngam(hyperf_i(1),ierr) + alngam(hyperf_i(2),ierr) - alngam(hyperf_i(1)+hyperf_i(2),ierr))
+! dBeta/df_i
+		logPGradient(2*nPixels+1:3*nPixels) = logPGradient(2*nPixels+1:3*nPixels) + (1.d0 - hyperf_i(2)) / (fMax - f_i) + (hyperf_i(1) - 1.d0) / (f_i - fMin)
+! dBeta/dalpha
+		logPGradient(4*nPixels+5) = -nPixels * log(fMax - fMin) + sum( log(f_i - fMin) ) - nPixels * digama(hyperf_i(1), ierr) + nPixels * digama(hyperf_i(1)+hyperf_i(2), ierr)
+! dBeta/dbeta
+		logPGradient(4*nPixels+6) = -nPixels * log(fMax - fMin) + sum( log(fMax - f_i) ) - nPixels * digama(hyperf_i(2), ierr) + nPixels * digama(hyperf_i(1)+hyperf_i(2), ierr)
+			
+!-------------
 ! It is a scale parameter so we use a Jeffreys' prior
 !-------------
 		logP = logP - (nu-1.d0) * log(hyperB_i(2)) - nu * hyperB_i(2)
@@ -82,7 +97,12 @@ contains
 		logP = logP - 2.5d0 * log(sum(hypermu_i))
 		logPGradient(4*nPixels+3) = logPGradient(4*nPixels+3) - 2.5d0 / sum(hypermu_i)
 		logPGradient(4*nPixels+4) = logPGradient(4*nPixels+4) - 2.5d0 / sum(hypermu_i)
-					
+		
+		logP = logP - 2.5d0 * log(sum(hyperf_i))
+		logPGradient(4*nPixels+5) = logPGradient(4*nPixels+5) - 2.5d0 / sum(hyperf_i)
+		logPGradient(4*nPixels+6) = logPGradient(4*nPixels+6) - 2.5d0 / sum(hyperf_i)
+		
+		
 !-----------------
 ! DATA LOG-LIKELIHOOD
 !-----------------
@@ -130,7 +150,10 @@ contains
 		
 		logPGradient(4*nPixels+3) = logPGradient(4*nPixels+3) * diffSigmoid(trial(4*nPixels+3), 0.d0, hyperparRanges(1,2))
 		logPGradient(4*nPixels+4) = logPGradient(4*nPixels+4) * diffSigmoid(trial(4*nPixels+4), 0.d0, hyperparRanges(2,2))
-					
+		
+		logPGradient(4*nPixels+5) = logPGradient(4*nPixels+5) * diffSigmoid(trial(4*nPixels+5), 0.d0, hyperparRanges(1,3))
+		logPGradient(4*nPixels+6) = logPGradient(4*nPixels+6) * diffSigmoid(trial(4*nPixels+6), 0.d0, hyperparRanges(2,3))
+				
 					
 		logP = -logP
 		logPGradient = -logPGradient
@@ -150,7 +173,7 @@ contains
 	integer :: nVariables
 	real(kind=8), dimension(nVariables) :: x, x2
    real(kind=8), dimension(nVariables) :: g, meanOld
-   real(kind=8) :: v, xwrite(4)
+   real(kind=8) :: v, xwrite(6)
 	integer i
 			
 		meanOld = parsMean
@@ -167,11 +190,13 @@ contains
 		x2(4*nPixels+2) = sigmoid(x(4*nPixels+2), 0.d0, hyperparRanges(2,1))
 		x2(4*nPixels+3) = sigmoid(x(4*nPixels+3), 0.d0, hyperparRanges(1,2))
 		x2(4*nPixels+4) = sigmoid(x(4*nPixels+4), 0.d0, hyperparRanges(2,2))
+		x2(4*nPixels+5) = sigmoid(x(4*nPixels+5), 0.d0, hyperparRanges(1,3))
+		x2(4*nPixels+6) = sigmoid(x(4*nPixels+6), 0.d0, hyperparRanges(2,3))
 				
 		xwrite = x2(4*nPixels+1:nVariables)
 		write(20) xwrite
 		
-! 		write(21) x2
+		write(21) x2
 		
 		open(unit=25,file= "test.stddev",action='write',status='replace')
 		write(25,*) sqrt(parsVariance)

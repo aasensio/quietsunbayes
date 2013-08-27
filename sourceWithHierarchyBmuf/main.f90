@@ -25,7 +25,7 @@ implicit none
 		read(arg,*) nSteps
 	endif
 	
-	allocate(hyperparRanges(2,2))
+	allocate(hyperparRanges(2,3))
 	
 ! Read ranges of parameters
 	open(unit=12,file='conf.dat',action='read',status='old')
@@ -39,7 +39,7 @@ implicit none
 	read(12,*) phiMin, phiMax
 	read(12,*)
 	read(12,*)
-	do i = 1, 2
+	do i = 1, 3
 		read(12,*) (hyperparRanges(j,i),j=1,2)
 	enddo
 	close(12)
@@ -72,18 +72,19 @@ implicit none
 ! Hyperparameters
 	allocate(hyperB_i(2))
 	allocate(hypermu_i(2))
+	allocate(hyperf_i(2))
 	
 ! Number of parameters
 ! - B, mu, f and phi for each pixel plus the hyperparameters
-	nVariables = nPixels * 4 + 4
+	nVariables = nPixels * 4 + 6
 	
 	allocate(parsOld(nVariables))
 	allocate(parsInitial(nVariables))
 	allocate(parsMean(nVariables))
 	allocate(parsVariance(nVariables))
 	
-	allocate(parsToSave(4))
-	do i = 1, 4
+	allocate(parsToSave(6))
+	do i = 1, 6
 		parsToSave(i) = nPixels*4+i
 	enddo
 

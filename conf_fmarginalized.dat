@@ -4,7 +4,6 @@
 # B, mu, f, phi
 0.d0  2500.d0 
 -1.d0  1.d0 
-0.d0  1.d0 
 0.d0  3.141592d0 
 
 # Upper limit of hyperparameters
